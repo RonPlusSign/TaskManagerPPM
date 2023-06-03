@@ -1,10 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block content %}
+    <h2>Home</h2>
+    <p>Welcome to the home page!</p>
+    <a href="{% url 'login' %}">
+        <button class="btn btn-primary">Login</button>
+    </a>
+    <a href="{% url 'signup' %}">
+        <button class="btn btn-primary">Register</button>
+    </a>
+
+    <!-- My tasks -->
+    <h2>My tasks</h2>
+    <a href="{% url 'tasks' %}">
+        <button class="btn btn-primary">My tasks</button>
+    </a>
+{% endblock content %}
