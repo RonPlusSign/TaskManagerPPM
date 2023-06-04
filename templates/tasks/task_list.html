@@ -1,9 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2>Tasks</h2>
+    <h2>{{ task_list.title }}</h2>
+    <p>{{ task_list.description }}</p>
+    <p>Owner: {{ task_list.owner.username }}</p>
+    <p>Participants:
+        {% for user in task_list.partecipants.all %}
+            {{ user.username }}
+        {% endfor %}
+    </p>
+
+    <h3>Tasks</h3>
+    <!-- New task -->
+    <a href="{% url 'new_task' %}"><button class="btn btn-primary">New task</button></a>
+
+    <!-- List of tasks -->
     <ul>
-        {% for task in tasks %}
+        {% for task in task_list.tasks.all %}
             <li>{{ task.title }}</li>
         {% endfor %}
     </ul>

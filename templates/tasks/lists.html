@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Task lists</h2>
+    <!-- Create new list btn -->
+    <a href="{% url 'new_list' %}">
+        <button class="btn btn-primary">New list</button>
+    </a>
+
+    <ul>
+        {% for task_list in lists %}
+            <li>{{ task_list.title }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

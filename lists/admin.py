@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from tasks.models import *
+from lists.models import *
 
 admin.site.register(TaskList)
 admin.site.register(Task)

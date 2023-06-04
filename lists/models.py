@@ -8,6 +8,7 @@ class TaskList(models.Model):
     description = models.TextField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owner")
     participants = models.ManyToManyField(User, related_name="participants")
+    tasks = models.ManyToManyField("Task", related_name="tasks")
 
     def __str__(self):
         return self.title
