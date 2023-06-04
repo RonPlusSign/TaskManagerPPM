@@ -12,12 +12,12 @@
 
     <h3>Tasks</h3>
     <!-- New task -->
-    <a href="{% url 'new_task' %}"><button class="btn btn-primary">New task</button></a>
+    <a href="{% url 'task_new' task_list.id %}"><button class="btn btn-primary">New task</button></a>
 
     <!-- List of tasks -->
     <ul>
         {% for task in task_list.tasks.all %}
-            <li>{{ task.title }}</li>
+            <li>{{ task }}</li>
         {% endfor %}
     </ul>
 {% endblock %}

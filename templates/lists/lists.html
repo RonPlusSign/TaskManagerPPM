@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Task lists</h2>
+    <!-- Create new list btn -->
+    <a href="{% url 'list_new' %}">
+        <button class="btn btn-primary">New list</button>
+    </a>
+
+    <ul>
+        {% for task_list in lists %}
+            <div class="card">
+                <div class="card-header">
+                    <span class="fw-bold">
+                      <a href="{% url 'list' task_list.id %}">{{ task_list.title }}</a>
+                    </span>
+                    <span class="text-muted">Created by {{ task_list.owner }}</span>
+                </div>
+                <div class="card-body">
+                    <span class="text-muted">Number of participants: {{ task_list.participants.count }}</span>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <a href="{% url 'list_edit' task_list.id %}">Edit</a>
+                    <a href="{% url 'list_delete' task_list.id %}">Delete</a>
+                </div>
+            </div>
+            <br/>
+        {% endfor %}
+    </ul>
+{% endblock %}
