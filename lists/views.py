@@ -59,9 +59,6 @@ class EditListView(UpdateView):
     success_url = reverse_lazy("lists")
 
     def post(self, request, *args, **kwargs):
-
-        print("POST REQUEST, EDIT LIST")
-
         if not request.user.is_authenticated:
             return redirect("login")
 
@@ -69,11 +66,7 @@ class EditListView(UpdateView):
         if request.user != task_list.owner:
             return redirect("lists")
 
-        task_list.title = request.POST.get("title")
-        task_list.description = request.POST.get("description")
-        task_list.participants.set(request.POST.getlist("participants"))
-        task_list.save()
-        return redirect("lists")
+        return super().post(request, *args, **kwargs)
 
 
 class DeleteListView(View):
@@ -92,6 +85,16 @@ class DeleteListView(View):
 #####################
 ####### TASKS #######
 #####################
+
+def redirect_to_previous_or_list(request, list_id):
+    """ Redirect to the previous page, or to the list page if there is no previous page """
+
+    # Get the referer URL from the request headers
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    else:
+        return redirect("list", id=list_id)
 
 
 class MyTasksView(View):
@@ -120,20 +123,6 @@ class TaskDetailView(View):
         task = Task.objects.get(id=task_id)
         comments = TaskComment.objects.filter(task=task)
         return render(request, self.template, {"task": task, 'comments': comments})
-
-    def post(self, request):
-        # TODO
-        pass
-
-    def delete(self, request, pk):
-        task = Task.objects.get(id=pk)
-        task.delete()
-        return redirect("lists")
-
-    def put(self, request):
-        """ Update the task """
-        # TODO
-        pass
 
 
 class CreateTaskView(CreateView):
@@ -167,22 +156,22 @@ class CreateTaskView(CreateView):
             return self.form_invalid(form)
 
 
-class EditTaskView(View):
-    template = "tasks/edit_task.html"  # TODO
+class EditTaskView(UpdateView):
+    model = Task
+    fields = ["title", "description", "assigned_to", "due_datetime", "attachment", "priority"]
+    template_name = "tasks/edit_task.html"
+    success_url = reverse_lazy("my-tasks")
 
-    def get(self, request, list_id, task_id):
-        task = Task.objects.get(id=task_id)
-        return render(request, self.template, {"task": task})
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect("login")
 
-    def post(self, request, list_id, task_id):
-        task = Task.objects.get(id=task_id)
-        task.title = request.POST.get("title")
-        task.description = request.POST.get("description")
-        task.assigned_to = request.POST.get("assigned_to")
-        task.due_datetime = request.POST.get("due_datetime")
-        task.save()
+        task = Task.objects.get(id=kwargs["pk"])
+        if task is None:
+            return redirect_to_previous_or_list(request, kwargs["list_id"])
 
-        return redirect_to_previous_or_list(request, list_id)
+        self.success_url = reverse_lazy("task", kwargs={"list_id": task.task_list.id, "task_id": task.id})
+        return super().post(request, *args, **kwargs)
 
 
 class DeleteTaskView(View):
@@ -191,17 +180,6 @@ class DeleteTaskView(View):
         task.delete()
 
         return redirect_to_previous_or_list(request, list_id)
-
-
-def redirect_to_previous_or_list(request, list_id):
-    """ Redirect to the previous page, or to the list page if there is no previous page """
-
-    # Get the referer URL from the request headers
-    referer = request.META.get('HTTP_REFERER')
-    if referer:
-        return redirect(referer)
-    else:
-        return redirect("list", id=list_id)
 
 
 class CompleteTaskView(View):
