@@ -1,15 +1,58 @@
 {% extends "base.html" %}
+{% load custom_filters %}
+
+{% block title %}My tasks{% endblock %}
 
 {% block content %}
     <h2>My tasks</h2>
-    <ul>
-        {% for task_list in lists %}
-            <li>{{ task_list.title }}</li>
-            <ol>
-                {% for task in task_list.tasks %}
-                    <li>{{ task.title }}</li>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                {% for task_list in lists %}
+                    <ul class="list-group my-2">
+                        <li class="list-group-item d-flex list-group-item-primary">
+                            <h4 class="col d-inline m-0">{{ task_list.title }}</h4>
+                            <a href="{% url 'list' task_list.id %}" class="col d-flex justify-content-end">
+                                <button class="btn btn-sm btn-primary"><i class="bi bi-arrow-right"></i></button>
+                            </a>
+                        </li>
+                        <li class="list-group-item">
+                            <ul class="list-group">
+                                {% for task in task_dict|get_item:task_list.id %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center
+                                            {% if task.completed %}list-group-item-success{% endif %}">
+                                        <div class="col col-8">
+                                            {{ task.title }}
+                                        </div>
+                                        <div class="col {% if task.due_datetime|is_expired and not task.completed %}text-danger{% endif %}">
+                                            {{ task.due_datetime | date:"d M Y H:i" }}
+                                        </div>
+                                        <div class="col d-flex justify-content-end">
+                                            <a href="{% url 'task' task_list.id task.id %}">
+                                                <button class="btn text-info"><i class="bi-info-circle-fill"></i>
+                                                </button>
+                                            </a>
+                                            {% if not task.completed %}
+                                                <a href="{% url 'task_complete' task_list.id task.id %}">
+                                                    <button class="btn text-success"><i
+                                                            class="bi-check-circle-fill"></i>
+                                                    </button>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'task_edit' task_list.id task.id %}">
+                                                <button class="btn text-warning"><i class="bi-pencil-fill"></i></button>
+                                            </a>
+                                            <a href="{% url 'task_delete' task_list.id task.id %}">
+                                                <button class="btn text-danger"><i class="bi-trash-fill"></i></button>
+                                            </a>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    </ul>
                 {% endfor %}
-            </ol>
-        {% endfor %}
-    </ul>
+            </div>
+        </div>
+    </div>
 {% endblock %}

@@ -40,7 +40,7 @@
                         </a>
                     </div>
                     <div class="col">{{ task.assigned_to.first_name }} {{ task.assigned_to.last_name }}</div>
-                    <div class="col {% if task.due_datetime|is_expired %}text-danger{% endif %}">
+                    <div class="col {% if task.due_datetime|is_expired and not task.completed %}text-danger{% endif %}">
                         {{ task.due_datetime | date:"d M Y H:i" }}
                     </div>
                     <div class="col">{{ task.priority | default_if_none:"" }}</div>
@@ -48,9 +48,11 @@
                         <a href="{% url 'task' task_list.id task.id %}">
                             <button class="btn text-info"><i class="bi-info-circle-fill"></i></button>
                         </a>
-                        <a href="{% url 'task_complete' task_list.id task.id %}">
-                            <button class="btn text-success"><i class="bi-check-circle-fill"></i></button>
-                        </a>
+                        {% if not task.completed %}
+                            <a href="{% url 'task_complete' task_list.id task.id %}">
+                                <button class="btn text-success"><i class="bi-check-circle-fill"></i></button>
+                            </a>
+                        {% endif %}
                         <a href="{% url 'task_edit' task_list.id task.id %}">
                             <button class="btn text-warning"><i class="bi-pencil-fill"></i></button>
                         </a>

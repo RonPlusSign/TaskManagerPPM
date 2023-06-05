@@ -90,15 +90,22 @@ class DeleteListView(View):
 
 
 class MyTasksView(View):
-    template = "tasks/my_tasks.html"  # TODO
+    template = "tasks/my_tasks.html"
 
     def get(self, request):
         task_lists = TaskList.objects.filter(participants=request.user)
         tasks = Task.objects.filter(task_list__in=task_lists).filter(assigned_to=request.user)
-        for task_list in task_lists:
-            task_list.tasks = tasks.filter(task_list=task_list)
 
-        return render(request, self.template, {"task_lists": task_lists})
+        # Create a dictionary of user tasks, where the key is the task list id
+        task_dict = {}
+        for task_list in task_lists:
+            if tasks.filter(task_list=task_list).exists():
+                task_dict[task_list.id] = tasks.filter(task_list=task_list)
+
+        # Remove task lists without user tasks
+        task_lists = task_lists.filter(id__in=task_dict.keys())
+
+        return render(request, self.template, {"lists": task_lists, "task_dict": task_dict})
 
 
 class TaskDetailView(View):
@@ -169,13 +176,26 @@ class EditTaskView(View):
         task.assigned_to = request.POST.get("assigned_to")
         task.due_datetime = request.POST.get("due_datetime")
         task.save()
-        return redirect("list", id=list_id)
+
+        return redirect_to_previous_or_list(request, list_id)
 
 
 class DeleteTaskView(View):
     def get(self, request, list_id, task_id):
         task = Task.objects.get(id=task_id)
         task.delete()
+
+        return redirect_to_previous_or_list(request, list_id)
+
+
+def redirect_to_previous_or_list(request, list_id):
+    """ Redirect to the previous page, or to the list page if there is no previous page """
+
+    # Get the referer URL from the request headers
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    else:
         return redirect("list", id=list_id)
 
 
@@ -186,12 +206,13 @@ class CompleteTaskView(View):
 
         # Only the user assignee can complete the task
         if request.user != Task.objects.get(id=task_id).assigned_to:
-            return redirect("list", id=list_id)
+            return redirect_to_previous_or_list(request, list_id)
 
         task = Task.objects.get(id=task_id)
-        task.completed = not task.completed
+        task.completed = True
         task.save()
-        return redirect("list", id=list_id)
+
+        return redirect_to_previous_or_list(request, list_id)
 
 
 #####################
