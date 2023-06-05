@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, ListView, UpdateView
 
 from lists.models import Task, TaskComment, TaskList
 
@@ -52,24 +52,20 @@ class CreateListView(CreateView):
             return self.form_invalid(form)
 
 
-class EditListView(View):
-    template = "lists/edit_list.html"
+class EditListView(UpdateView):
+    model = TaskList
+    fields = ["title", "description", "participants"]
+    template_name = "lists/edit_list.html"
+    success_url = reverse_lazy("lists")
 
-    def get(self, request, pk):
+    def post(self, request, *args, **kwargs):
+
+        print("POST REQUEST, EDIT LIST")
+
         if not request.user.is_authenticated:
             return redirect("login")
 
-        task_list = TaskList.objects.get(id=pk)
-        if request.user != task_list.owner:
-            return redirect("lists")
-
-        return render(request, self.template, {"task_list": task_list})
-
-    def post(self, request, pk):
-        if not request.user.is_authenticated:
-            return redirect("login")
-
-        task_list = TaskList.objects.get(id=pk)
+        task_list = TaskList.objects.get(id=kwargs["pk"])
         if request.user != task_list.owner:
             return redirect("lists")
 

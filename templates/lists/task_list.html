@@ -63,7 +63,9 @@
                 </div>
             </li>
         {% empty %}
-            <h3>No tasks in this list.</h3>
+            <li class="list-group-item">
+                <h5 class="m-0">No tasks in this list.</h5>
+            </li>
         {% endfor %}
     </ul>
 {% endblock %}

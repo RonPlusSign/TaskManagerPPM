@@ -4,31 +4,54 @@
     <div class="row d-flex align-items-end">
         <h3 class="col m-0">Task lists</h3>
         <!-- New list -->
-        <a class="col" href="{% url 'list_new' %}">
+        <div class="col"><a href="{% url 'list_new' %}">
             <button class="btn btn-primary float-end">New list</button>
-        </a>
+        </a></div>
     </div>
 
     <ul class="p-0 my-3">
         {% for task_list in lists %}
-            <div class="card">
-                <div class="card-header">
-                    <span class="fw-bold">
-                      <a href="{% url 'list' task_list.id %}">{{ task_list.title }}</a>
-                    </span>
-                    <span class="text-muted">Created by {{ task_list.owner }}</span>
+            <a href="{% url 'list' task_list.id %}" class="link-dark text-decoration-none">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row d-flex">
+                            <div class="col">
+                                <span class="fw-bold">{{ task_list.title }}</span>
+                            </div>
+                            <div class="col">
+                                <em class="text-muted float-end">Created by <b>{{ task_list.owner }}</b></em>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-text mb-2">{{ task_list.description }}</h6>
+                        <div class="mb-2">Participants:
+                            {% for user in task_list.participants.all %}
+                                <h5 class="d-inline-block my-0 me-1"><span
+                                        class="badge rounded-pill bg-info">{{ user }}</span>
+                                </h5>
+                            {% endfor %}
+                        </div>
+                        <p class="mb-0">Number of tasks: {{ task_list.tasks.count }}</p>
+                    </div>
+                    <div class="card-footer text-end text-muted">
+                        <a href="{% url 'list_edit' task_list.id %}" class="d-inline-flex link-dark text-decoration-none">
+                            <button class="btn text-warning"><i class="bi-pencil-fill"></i></button>
+                        </a>
+
+                        <a href="{% url 'list_delete' task_list.id %}" class="d-inline-flex link-dark text-decoration-none">
+                            <button class="btn text-danger"><i class="bi-trash-fill"></i></button>
+                        </a>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <span class="text-muted">Number of participants: {{ task_list.participants.count }}</span>
-                </div>
-                <div class="card-footer text-center text-muted">
-                    <a href="{% url 'list_edit' task_list.id %}">Edit</a>
-                    <a href="{% url 'list_delete' task_list.id %}">Delete</a>
-                </div>
-            </div>
+            </a>
             <br/>
         {% empty %}
-            <h4>No lists found, please create one.</h4>
+            <ul class="list-group my-2">
+                <li class="list-group-item">
+                    <h4>No lists found, please create one.</h4>
+                </li>
+            </ul>
         {% endfor %}
     </ul>
 {% endblock %}
