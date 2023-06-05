@@ -37,10 +37,19 @@ class CreateListView(CreateView):
     template_name = "lists/create_list.html"
     success_url = reverse_lazy("lists")
 
-    def form_valid(self, form):
-        form.instance.owner = self.request.user
-        form.instance.participants.add(self.request.user)
-        return super().form_valid(form)
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            form.instance.owner = self.request.user
+            task_list = form.save()
+
+            # Add the user as owner and participant
+            task_list.participants.add(self.request.user)
+            task_list.save()
+
+            return redirect("lists")
+        else:
+            return self.form_invalid(form)
 
 
 class EditListView(View):
@@ -72,11 +81,11 @@ class EditListView(View):
 
 
 class DeleteListView(View):
-    def get(self, request, pk):
+    def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect("login")
 
-        task_list = TaskList.objects.get(id=pk)
+        task_list = TaskList.objects.get(id=kwargs["id"])
         if request.user != task_list.owner:
             return redirect("lists")
 
@@ -149,11 +158,11 @@ class CreateTaskView(CreateView):
     def get_success_url(self):
         return reverse_lazy("list", kwargs={"id": self.kwargs["list_id"]})
 
-    # Also add the task to the task_list, after it is created
     def post(self, request, *args, **kwargs):
         form = self.get_form()
         if form.is_valid():
             self.form_valid(form)
+            # Add the task to the task_list, after it is created
             task_list = TaskList.objects.get(id=self.kwargs["list_id"])
             task_list.tasks.add(self.object)
             task_list.save()

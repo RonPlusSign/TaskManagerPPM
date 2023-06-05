@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2>Task lists</h2>
-    <!-- Create new list btn -->
-    <a href="{% url 'list_new' %}">
-        <button class="btn btn-primary">New list</button>
-    </a>
+    <div class="row d-flex align-items-end">
+        <h3 class="col m-0">Task lists</h3>
+        <!-- New list -->
+        <a class="col" href="{% url 'list_new' %}">
+            <button class="btn btn-primary float-end">New list</button>
+        </a>
+    </div>
 
-    <ul>
+    <ul class="p-0 my-3">
         {% for task_list in lists %}
             <div class="card">
                 <div class="card-header">
@@ -26,7 +28,7 @@
             </div>
             <br/>
         {% empty %}
-            <h4>No lists found</h4>
+            <h4>No lists found, please create one.</h4>
         {% endfor %}
     </ul>
 {% endblock %}
