@@ -14,6 +14,10 @@ urlpatterns = [
     path('my-lists', views.MyTasksView.as_view(), name="my-tasks"),
     path('<int:list_id>/<int:task_id>', views.TaskDetailView.as_view(), name="task"),
     path('<int:list_id>/new', views.CreateTaskView.as_view(), name="task_new"),
+    path('<int:list_id>/<int:task_id>/complete', views.CompleteTaskView.as_view(), name="task_complete"),
     path('<int:list_id>/<int:task_id>/edit', views.EditTaskView.as_view(), name="task_edit"),
     path('<int:list_id>/<int:task_id>/delete', views.DeleteTaskView.as_view(), name="task_delete"),
+
+    # Comments
+    path('<int:list_id>/<int:task_id>/comment', views.AddCommentView.as_view(), name="add_comment"),
 ]

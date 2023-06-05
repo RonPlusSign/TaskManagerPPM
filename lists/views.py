@@ -3,7 +3,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, ListView
 
-from lists.models import Task, TaskList
+from lists.models import Task, TaskComment, TaskList
 
 
 #####################
@@ -39,6 +39,7 @@ class CreateListView(CreateView):
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
+        form.instance.participants.add(self.request.user)
         return super().form_valid(form)
 
 
@@ -89,7 +90,7 @@ class DeleteListView(View):
 
 
 class MyTasksView(View):
-    template = "tasks/my_tasks.html"    # TODO
+    template = "tasks/my_tasks.html"  # TODO
 
     def get(self, request):
         task_lists = TaskList.objects.filter(participants=request.user)
@@ -101,11 +102,12 @@ class MyTasksView(View):
 
 
 class TaskDetailView(View):
-    template = "tasks/task_detail.html" # TODO
+    template = "tasks/task_detail.html"
 
-    def get(self, request, pk):
-        task = Task.objects.get(id=pk)
-        return render(request, self.template, {"task": task})
+    def get(self, request, list_id, task_id):
+        task = Task.objects.get(id=task_id)
+        comments = TaskComment.objects.filter(task=task)
+        return render(request, self.template, {"task": task, 'comments': comments})
 
     def post(self, request):
         # TODO
@@ -154,7 +156,7 @@ class CreateTaskView(CreateView):
 
 
 class EditTaskView(View):
-    template = "tasks/edit_task.html"   # TODO
+    template = "tasks/edit_task.html"  # TODO
 
     def get(self, request, list_id, task_id):
         task = Task.objects.get(id=task_id)
@@ -179,7 +181,37 @@ class DeleteTaskView(View):
 
 class CompleteTaskView(View):
     def get(self, request, list_id, task_id):
+        if not request.user.is_authenticated:
+            return redirect("login")
+
+        # Only the user assignee can complete the task
+        if request.user != Task.objects.get(id=task_id).assigned_to:
+            return redirect("list", id=list_id)
+
         task = Task.objects.get(id=task_id)
-        task.completed = True
+        task.completed = not task.completed
         task.save()
         return redirect("list", id=list_id)
+
+
+#####################
+##### COMMENTS ######
+#####################
+
+class AddCommentView(View):
+    model = TaskComment
+
+    def post(self, request, list_id, task_id):
+        if not request.user.is_authenticated:
+            return redirect("login")
+        if not request.POST.get("comment") or not request.POST.get("comment").strip():
+            return redirect("task", list_id=list_id, task_id=task_id)
+
+        task = Task.objects.get(id=task_id)
+        comment = TaskComment.objects.create(
+            comment=request.POST.get("comment"),
+            task=task,
+            user=request.user,
+        )
+        comment.save()
+        return redirect("task", list_id=list_id, task_id=task_id)

@@ -3,21 +3,62 @@
 {% block content %}
     <h2>{{ task_list.title }}</h2>
     <p>{{ task_list.description }}</p>
-    <p>Owner: {{ task_list.owner.username }}</p>
-    <p>Participants:
-        {% for user in task_list.partecipants.all %}
-            {{ user.username }}
+    <div>Owner: <h5 class="d-inline-block"><span class="badge rounded-pill bg-info">{{ task_list.owner }}</span></h5>
+    </div>
+    <div>Participants:
+        {% for user in task_list.participants.all %}
+            <h5 class="d-inline-block"><span class="badge rounded-pill bg-info">{{ user }}</span></h5>
         {% endfor %}
-    </p>
+    </div>
 
-    <h3>Tasks</h3>
-    <!-- New task -->
-    <a href="{% url 'task_new' task_list.id %}"><button class="btn btn-primary">New task</button></a>
+    <div class="row d-flex align-items-end">
+        <h4 class="col m-0">Tasks</h4>
+        <!-- New task -->
+        <a class="col" href="{% url 'task_new' task_list.id %}">
+            <button class="btn btn-primary float-end">New task</button>
+        </a>
+    </div>
 
     <!-- List of tasks -->
-    <ul>
+    <ul class="list-group my-3">
+        <li class="list-group-item list-group-item-primary">
+            <div class="row">
+                <div class="col col-4">Title</div>
+                <div class="col">Assignee</div>
+                <div class="col">Due datetime</div>
+                <div class="col">Priority</div>
+                <div class="col d-flex justify-content-end">Actions</div>
+            </div>
+        </li>
         {% for task in task_list.tasks.all %}
-            <li>{{ task }}</li>
+            <li class="list-group-item {% if task.completed %}list-group-item-success{% endif %}">
+                <div class="row align-items-center">
+                    <div class="col col-4">
+                        <a href="{% url 'task' task_list.id task.id %}" class="link-dark text-decoration-none">
+                            <h6 class="mb-0">{{ task.title }}</h6>
+                        </a>
+                    </div>
+                    <div class="col">{{ task.assigned_to.first_name }} {{ task.assigned_to.last_name }}</div>
+                    <div class="col"> {{ task.due_datetime | date:"d M Y" }} {{ task.due_datetime | time:"H:i" }} </div>
+                    <div class="col">{{ task.priority | default_if_none:"" }}</div>
+                    <div class="col d-flex justify-content-end">
+                        <a href="{% url 'task' task_list.id task.id %}">
+                            <button class="btn text-info"><i class="bi-info-circle-fill"></i></button>
+                        </a>
+                        <a href="{% url 'task_complete' task_list.id task.id %}">
+                            <button class="btn text-success"><i class="bi-check-circle-fill"></i></button>
+                        </a>
+                        <a href="{% url 'task_edit' task_list.id task.id %}">
+                            <button class="btn text-warning"><i class="bi-pencil-fill"></i></button>
+                        </a>
+                        <a href="{% url 'task_delete' task_list.id task.id %}">
+                            <button class="btn text-danger"><i class="bi-trash-fill"></i></button>
+                        </a>
+                    </div>
+                </div>
+            </li>
+        {% empty %}
+            <h3>No tasks in this list.</h3>
         {% endfor %}
     </ul>
 {% endblock %}

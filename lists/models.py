@@ -8,7 +8,7 @@ class TaskList(models.Model):
     description = models.TextField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owner")
     participants = models.ManyToManyField(User, related_name="participants")
-    tasks = models.ManyToManyField("Task", related_name="tasks")
+    tasks = models.ManyToManyField("Task", related_name="tasks", blank=True)
 
     def __str__(self):
         return self.title
@@ -27,7 +27,7 @@ class Task(models.Model):
     due_datetime = models.DateTimeField(null=True, blank=True)
     assigned_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assigned_to")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_by")
-    attachment = models.FileField(upload_to="media/", null=True, blank=True)
+    attachment = models.FileField(null=True, blank=True)
 
     priority = models.CharField(choices=Priority.choices, max_length=6, null=True, blank=True, default=None)
     task_list = models.ForeignKey(TaskList, on_delete=models.CASCADE, related_name="task_list")

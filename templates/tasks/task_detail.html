@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ task.title }}{% endblock title %}
+
+{% block content %}
+    <div class="container">
+        <div class="row my-3">
+            <div class="col-md-8 offset-md-2">
+                <h2>{{ task.title }}</h2>
+                <h6 class="mb-2">{{ task.description }}</h6>
+                <p class="mb-2">Assigned to <span class="fw-bold">{{ task.assigned_to }}</span></p>
+                <p class="mb-2">Status:
+                    {% if task.completed %}<span class="badge bg-success">Completed</span>
+                    {% else %}<span class="badge bg-warning">In progress</span>
+                    {% endif %}
+                </p>
+                <p class="mb-2">Due datetime: {{ task.due_datetime | date:"d M Y H:i" }}</p>
+                <p class="mb-2">Created by {{ task.created_by }}</p>
+                {% if task.attachment %}
+                    <p class="mb-2">Attachment:
+                        <a href="{{ task.attachment.url }}" download class="btn btn-light btn-file">
+                            <span class="d-flex align-items-center px-3 position-relative">
+                                <span class="bi bi-file-earmark-text me-1"></span>
+                                <span class="flex-grow-1">{{ task.attachment.name }}</span>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary">
+                                    <i class="bi bi-download"></i>
+                                </span>
+                            </span>
+                        </a>
+                    </p>
+                {% else %}
+                    <p class="mb-2">Attachment: No attachments</p>
+                {% endif %}
+                <h5>Comments</h5>
+                {% for comment in comments %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <span class="fw-bold mb-0">{{ comment.comment }}</span>
+                            <div class="float-end">
+                                <span class="text-muted mb-0"><em>{{ comment.user }},</em></span>
+                                <span class="text-muted mb-0">{{ comment.created_at | date:"d/m/Y H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                <!-- Create a new comment -->
+                <form method="post" action="{% url 'add_comment' task.task_list.id task.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Add a comment</label>
+                        <textarea name="comment" id="comment" rows="2" class="form-control"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add comment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
