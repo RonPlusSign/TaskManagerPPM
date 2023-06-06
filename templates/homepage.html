@@ -1,15 +1,25 @@
 {% extends "base.html" %}
 
-{% block content %}
-    <h2>Home</h2>
-    <p>Welcome to the home page!</p>
-    <!-- My tasks -->
-    <a href="{% url 'my-tasks' %}">
-        <button class="btn btn-primary">My tasks</button>
-    </a>
+{% block title %}Task Manager - Home{% endblock title %}
 
-    <!-- Lists -->
-    <a href="{% url 'lists' %}">
-        <button class="btn btn-primary">Lists</button>
-    </a>
+{% block content %}
+    <div class="row">
+        <div class="col-lg-6 offset-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title text-center">Welcome to Task Manager</h1>
+                    <p class="card-text text-center">A simple and efficient task management system</p>
+                    <div class="text-center mt-4">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'lists' %}" class="btn btn-primary me-2">View Lists</a>
+                            <a href="{% url 'my-tasks' %}" class="btn btn-secondary">My Tasks</a>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="btn btn-primary me-2">Log In</a>
+                            <a href="{% url 'signup' %}" class="btn btn-secondary">Sign Up</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock content %}
