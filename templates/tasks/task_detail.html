@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 {% load crispy_forms_tags %}
 
 {% block title %}{{ task.title }}{% endblock title %}
@@ -9,13 +10,37 @@
             <div class="col-md-8 offset-md-2">
                 <h2>{{ task.title }}</h2>
                 <h6 class="mb-2">{{ task.description }}</h6>
+                <a href="{% url 'task_edit' task.task_list.id task.id %}" class="d-inline-flex mb-2 link-dark text-decoration-none">
+                   <button class="btn btn-outline-warning btn-sm">
+                          Edit
+                          <i class="bi bi-pencil-square"></i>
+                   </button>
+                </a>
                 <p class="mb-2">Assigned to <span class="fw-bold">{{ task.assigned_to }}</span></p>
                 <p class="mb-2">Status:
-                    {% if task.completed %}<span class="badge bg-success">Completed</span>
-                    {% else %}<span class="badge bg-warning">In progress</span>
+                    {% if task.completed %}
+                        <span class="badge bg-success">Completed</span>
+                    {% else %}
+                        <span class="badge bg-warning">In progress</span>
+                        {% if user == task.assigned_to %}
+                            <a href="{% url 'task_complete' task.task_list.id task.id %}" class="ms-2">
+                                <button class="btn btn-outline-success btn-sm py-0">
+                                    Mark as complete
+                                    <i class="bi bi-check2"></i>
+                                </button>
+                            </a>
+                        {% endif %}
                     {% endif %}
                 </p>
-                <p class="mb-2">Due datetime: {{ task.due_datetime | date:"d M Y H:i" }}</p>
+                <p class="mb-2">Due datetime:
+                    {% if task.due_datetime %}
+                        <span class="{% if task.due_datetime|is_expired and not task.completed %}text-danger{% endif %}">
+                            {{ task.due_datetime | date:"d M Y H:i" }}
+                        </span>
+                    {% else %}
+                        No deadline
+                    {% endif %}
+                </p>
                 <p class="mb-2">Created by {{ task.created_by }}</p>
                 {% if task.attachment %}
                     <p class="mb-2">Attachment:
@@ -32,6 +57,13 @@
                 {% else %}
                     <p class="mb-2">Attachment: No attachments</p>
                 {% endif %}
+                <p class="mb-2">List:
+                    <a href="{% url 'list' task.task_list.id %}">
+                        <span class="badge bg-primary">{{ task.task_list.title }}
+                        <i class="bi bi-link-45deg me-1"></i>
+                        </span>
+                    </a>
+                </p>
                 <h5>Comments</h5>
                 {% for comment in comments %}
                     <div class="card mb-3">
