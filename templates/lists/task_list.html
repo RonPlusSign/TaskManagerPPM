@@ -15,9 +15,16 @@
     <div class="row d-flex align-items-end">
         <h4 class="col m-0">Tasks</h4>
         <!-- New task -->
-        <a class="col" href="{% url 'task_new' task_list.id %}">
-            <button class="btn btn-primary float-end">New task</button>
-        </a>
+        <div class="col">
+            <span class="float-end">
+                <a href="{% url 'list_edit' task_list.id %}" class="link-dark text-decoration-none">
+                    <button class="btn btn-outline-primary fw-bold">Edit list</button>
+                </a>
+                <a href="{% url 'task_new' task_list.id %}" class="link-dark text-decoration-none">
+                    <button class="btn btn-primary fw-bold">New task</button>
+                </a>
+            </span>
+        </div>
     </div>
 
     <!-- List of tasks -->
