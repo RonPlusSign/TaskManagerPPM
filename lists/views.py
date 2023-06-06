@@ -7,6 +7,20 @@ from django.views.generic import CreateView, ListView, UpdateView
 from lists.models import Task, TaskComment, TaskList
 
 
+def set_message(request, message):
+    """ Set a message in the session """
+    request.session["message"] = message
+
+
+def get_message(request):
+    """ Get a message from the session """
+    message = None
+    if "message" in request.session:
+        message = request.session["message"]
+        del request.session["message"]
+    return message if message else None
+
+
 #####################
 ####### LISTS #######
 #####################
@@ -17,6 +31,7 @@ class TaskListsView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["lists"] = TaskList.objects.filter(participants=self.request.user.id)
+        context["message"] = get_message(self.request)
         return context
 
 
@@ -26,11 +41,13 @@ class TaskListView(LoginRequiredMixin, ListView):
     def get(self, request, *args, **kwargs):
         task_list = TaskList.objects.get(id=self.kwargs["id"])
         if request.user not in task_list.participants.all():
+            set_message(request, "You are not a participant of this list.")
             return redirect("lists")
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["message"] = get_message(self.request)
         context['task_list'] = TaskList.objects.get(id=self.kwargs["id"])
         return context
 
@@ -53,7 +70,6 @@ class CreateListView(LoginRequiredMixin, CreateView):
             # Add the user as owner and participant
             task_list.participants.add(self.request.user)
             task_list.save()
-
             return redirect("lists")
         else:
             return self.form_invalid(form)
@@ -68,12 +84,14 @@ class EditListView(LoginRequiredMixin, UpdateView):
     def get(self, request, *args, **kwargs):
         task_list = TaskList.objects.get(id=kwargs["pk"])
         if request.user != task_list.owner:
+            set_message(request, "You are not the owner of this list.")
             return redirect("lists")
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         task_list = TaskList.objects.get(id=kwargs["pk"])
         if request.user != task_list.owner:
+            set_message(request, "You are not the owner of this list.")
             return redirect("lists")
 
         return super().post(request, *args, **kwargs)
@@ -83,6 +101,7 @@ class DeleteListView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         task_list = TaskList.objects.get(id=kwargs["id"])
         if request.user != task_list.owner:
+            set_message(request, "You are not the owner of this list.")
             return redirect("lists")
 
         task_list.delete()
@@ -119,23 +138,33 @@ class MyTasksView(LoginRequiredMixin, View):
 
         # Remove task lists without user tasks
         task_lists = task_lists.filter(id__in=task_dict.keys())
-
-        return render(request, self.template, {"lists": task_lists, "task_dict": task_dict})
+        return render(request, self.template, {"lists": task_lists, "task_dict": task_dict, "message": get_message(request)})
 
 
 class TaskDetailView(LoginRequiredMixin, View):
     template = "tasks/task_detail.html"
 
     def get(self, request, list_id, task_id):
+        if request.user not in TaskList.objects.get(id=list_id).participants.all():
+            set_message(request, "You are not a participant of this list.")
+            return redirect("lists")
+
         task = Task.objects.get(id=task_id)
         comments = TaskComment.objects.filter(task=task)
-        return render(request, self.template, {"task": task, 'comments': comments})
+        return render(request, self.template, {"task": task, 'comments': comments, 'message': get_message(request)})
 
 
 class CreateTaskView(LoginRequiredMixin, CreateView):
     model = Task
     fields = ["title", "description", "assigned_to", "due_datetime", "attachment", "priority"]
     template_name = "tasks/create_task.html"
+
+    def get(self, request, *args, **kwargs):
+        task_list = TaskList.objects.get(id=kwargs["list_id"])
+        if request.user not in task_list.participants.all():
+            set_message(request, "You are not a participant of this list.")
+            return redirect("lists")
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -151,6 +180,10 @@ class CreateTaskView(LoginRequiredMixin, CreateView):
         return reverse_lazy("list", kwargs={"id": self.kwargs["list_id"]})
 
     def post(self, request, *args, **kwargs):
+        if request.user not in TaskList.objects.get(id=kwargs["list_id"]).participants.all():
+            set_message(request, "You are not a participant of this list.")
+            return redirect("lists")
+
         form = self.get_form()
         if form.is_valid():
             self.form_valid(form)
@@ -169,20 +202,30 @@ class EditTaskView(LoginRequiredMixin, UpdateView):
     template_name = "tasks/edit_task.html"
     success_url = reverse_lazy("my-tasks")
 
+    def get(self, request, *args, **kwargs):
+        if request.user not in TaskList.objects.get(id=kwargs["list_id"]).participants.all():
+            set_message(request, "You are not a participant of this list.")
+            return redirect("lists")
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
-        task = Task.objects.get(id=kwargs["pk"])
-        if task is None:
+        if request.user not in TaskList.objects.get(id=kwargs["list_id"]).participants.all():
+            set_message(request, "You are not a participant of this list.")
             return redirect_to_previous_or_list(request, kwargs["list_id"])
 
+        task = Task.objects.get(id=kwargs["pk"])
         self.success_url = reverse_lazy("task", kwargs={"list_id": task.task_list.id, "task_id": task.id})
         return super().post(request, *args, **kwargs)
 
 
 class DeleteTaskView(LoginRequiredMixin, View):
     def get(self, request, list_id, task_id):
+        if request.user not in TaskList.objects.get(id=list_id).participants.all():
+            set_message(request, "You are not a participant of this list.")
+            return redirect("lists")
+
         task = Task.objects.get(id=task_id)
         task.delete()
-
         return redirect_to_previous_or_list(request, list_id)
 
 
@@ -190,12 +233,12 @@ class CompleteTaskView(LoginRequiredMixin, View):
     def get(self, request, list_id, task_id):
         # Only the user assignee can complete the task
         if request.user != Task.objects.get(id=task_id).assigned_to:
+            set_message(request, "You are not the assignee of this task.")
             return redirect_to_previous_or_list(request, list_id)
 
         task = Task.objects.get(id=task_id)
         task.completed = True
         task.save()
-
         return redirect_to_previous_or_list(request, list_id)
 
 
@@ -207,15 +250,18 @@ class AddCommentView(LoginRequiredMixin, View):
     model = TaskComment
 
     def post(self, request, list_id, task_id):
+
+        # Only the task list participants can comment
+        if request.user not in TaskList.objects.get(id=list_id).participants.all():
+            set_message(request, "You are not a participant of this list.")
+            return redirect("lists")
+
         if not request.POST.get("comment") or not request.POST.get("comment").strip():
+            set_message(request, "Comment cannot be empty.")
             return redirect("task", list_id=list_id, task_id=task_id)
 
         task = Task.objects.get(id=task_id)
-        comment = TaskComment.objects.create(
-            comment=request.POST.get("comment"),
-            task=task,
-            user=request.user,
-        )
+        comment = TaskComment.objects.create(comment=request.POST.get("comment"), task=task, user=request.user)
         comment.save()
         return redirect("task", list_id=list_id, task_id=task_id)
 
@@ -225,6 +271,7 @@ class DeleteCommentView(LoginRequiredMixin, View):
         # Only the comment owner can delete the comment
         comment = TaskComment.objects.get(id=comment_id)
         if request.user != comment.user:
+            set_message(request, "You are not the creator of this comment.")
             return redirect("task", list_id=list_id, task_id=task_id)
         comment.delete()
         return redirect("task", list_id=list_id, task_id=task_id)
