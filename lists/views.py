@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
@@ -9,18 +10,24 @@ from lists.models import Task, TaskComment, TaskList
 #####################
 ####### LISTS #######
 #####################
-class TaskListsView(ListView):
+class TaskListsView(LoginRequiredMixin, ListView):
     model = TaskList
     template_name = "lists/lists.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["lists"] = TaskList.objects.all()
+        context["lists"] = TaskList.objects.filter(participants=self.request.user.id)
         return context
 
 
-class TaskListView(ListView):
+class TaskListView(LoginRequiredMixin, ListView):
     template_name = "lists/task_list.html"
+
+    def get(self, request, *args, **kwargs):
+        task_list = TaskList.objects.get(id=self.kwargs["id"])
+        if request.user not in task_list.participants.all():
+            return redirect("lists")
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -31,7 +38,7 @@ class TaskListView(ListView):
         return Task.objects.filter(task_list=self.kwargs["id"])
 
 
-class CreateListView(CreateView):
+class CreateListView(LoginRequiredMixin, CreateView):
     model = TaskList
     fields = ["title", "description", "participants"]
     template_name = "lists/create_list.html"
@@ -52,16 +59,19 @@ class CreateListView(CreateView):
             return self.form_invalid(form)
 
 
-class EditListView(UpdateView):
+class EditListView(LoginRequiredMixin, UpdateView):
     model = TaskList
     fields = ["title", "description", "participants"]
     template_name = "lists/edit_list.html"
     success_url = reverse_lazy("lists")
 
-    def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect("login")
+    def get(self, request, *args, **kwargs):
+        task_list = TaskList.objects.get(id=kwargs["pk"])
+        if request.user != task_list.owner:
+            return redirect("lists")
+        return super().get(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
         task_list = TaskList.objects.get(id=kwargs["pk"])
         if request.user != task_list.owner:
             return redirect("lists")
@@ -69,11 +79,8 @@ class EditListView(UpdateView):
         return super().post(request, *args, **kwargs)
 
 
-class DeleteListView(View):
+class DeleteListView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect("login")
-
         task_list = TaskList.objects.get(id=kwargs["id"])
         if request.user != task_list.owner:
             return redirect("lists")
@@ -97,7 +104,7 @@ def redirect_to_previous_or_list(request, list_id):
         return redirect("list", id=list_id)
 
 
-class MyTasksView(View):
+class MyTasksView(LoginRequiredMixin, View):
     template = "tasks/my_tasks.html"
 
     def get(self, request):
@@ -116,7 +123,7 @@ class MyTasksView(View):
         return render(request, self.template, {"lists": task_lists, "task_dict": task_dict})
 
 
-class TaskDetailView(View):
+class TaskDetailView(LoginRequiredMixin, View):
     template = "tasks/task_detail.html"
 
     def get(self, request, list_id, task_id):
@@ -125,7 +132,7 @@ class TaskDetailView(View):
         return render(request, self.template, {"task": task, 'comments': comments})
 
 
-class CreateTaskView(CreateView):
+class CreateTaskView(LoginRequiredMixin, CreateView):
     model = Task
     fields = ["title", "description", "assigned_to", "due_datetime", "attachment", "priority"]
     template_name = "tasks/create_task.html"
@@ -156,16 +163,13 @@ class CreateTaskView(CreateView):
             return self.form_invalid(form)
 
 
-class EditTaskView(UpdateView):
+class EditTaskView(LoginRequiredMixin, UpdateView):
     model = Task
     fields = ["title", "description", "assigned_to", "due_datetime", "attachment", "priority"]
     template_name = "tasks/edit_task.html"
     success_url = reverse_lazy("my-tasks")
 
     def post(self, request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect("login")
-
         task = Task.objects.get(id=kwargs["pk"])
         if task is None:
             return redirect_to_previous_or_list(request, kwargs["list_id"])
@@ -174,7 +178,7 @@ class EditTaskView(UpdateView):
         return super().post(request, *args, **kwargs)
 
 
-class DeleteTaskView(View):
+class DeleteTaskView(LoginRequiredMixin, View):
     def get(self, request, list_id, task_id):
         task = Task.objects.get(id=task_id)
         task.delete()
@@ -182,11 +186,8 @@ class DeleteTaskView(View):
         return redirect_to_previous_or_list(request, list_id)
 
 
-class CompleteTaskView(View):
+class CompleteTaskView(LoginRequiredMixin, View):
     def get(self, request, list_id, task_id):
-        if not request.user.is_authenticated:
-            return redirect("login")
-
         # Only the user assignee can complete the task
         if request.user != Task.objects.get(id=task_id).assigned_to:
             return redirect_to_previous_or_list(request, list_id)
@@ -202,12 +203,10 @@ class CompleteTaskView(View):
 ##### COMMENTS ######
 #####################
 
-class AddCommentView(View):
+class AddCommentView(LoginRequiredMixin, View):
     model = TaskComment
 
     def post(self, request, list_id, task_id):
-        if not request.user.is_authenticated:
-            return redirect("login")
         if not request.POST.get("comment") or not request.POST.get("comment").strip():
             return redirect("task", list_id=list_id, task_id=task_id)
 
@@ -221,15 +220,10 @@ class AddCommentView(View):
         return redirect("task", list_id=list_id, task_id=task_id)
 
 
-class DeleteCommentView(View):
+class DeleteCommentView(LoginRequiredMixin, View):
     def get(self, request, list_id, task_id, comment_id):
-
-        if not request.user.is_authenticated:
-            return redirect("login")
-
-        comment = TaskComment.objects.get(id=comment_id)
-
         # Only the comment owner can delete the comment
+        comment = TaskComment.objects.get(id=comment_id)
         if request.user != comment.user:
             return redirect("task", list_id=list_id, task_id=task_id)
         comment.delete()

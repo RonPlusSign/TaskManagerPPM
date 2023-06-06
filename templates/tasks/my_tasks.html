@@ -51,6 +51,11 @@
                             </ul>
                         </li>
                     </ul>
+                {% empty %}
+                    <ul class="list-group my-2">
+                        <li class="list-group-item d-flex list-group-item-primary">
+                            <h4 class="col d-inline m-0">You don't have any tasks.</h4>
+                    </ul>
                 {% endfor %}
             </div>
         </div>
