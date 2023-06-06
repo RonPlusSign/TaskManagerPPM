@@ -40,6 +40,14 @@
                             <div class="float-end">
                                 <span class="text-muted mb-0"><em>{{ comment.user }},</em></span>
                                 <span class="text-muted mb-0">{{ comment.created_at | date:"d/m/Y H:i" }}</span>
+                                {% if comment.user == user %}
+                                    <a href="{% url 'delete_comment' task.task_list.id task.id comment.id %}"
+                                       class="d-inline-flex">
+                                        <button class="btn p-0 ms-2 text-danger fs-6">
+                                            <i class="bi bi-trash-fill mt-n1"></i>
+                                        </button>
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

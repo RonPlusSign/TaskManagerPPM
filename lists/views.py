@@ -219,3 +219,18 @@ class AddCommentView(View):
         )
         comment.save()
         return redirect("task", list_id=list_id, task_id=task_id)
+
+
+class DeleteCommentView(View):
+    def get(self, request, list_id, task_id, comment_id):
+
+        if not request.user.is_authenticated:
+            return redirect("login")
+
+        comment = TaskComment.objects.get(id=comment_id)
+
+        # Only the comment owner can delete the comment
+        if request.user != comment.user:
+            return redirect("task", list_id=list_id, task_id=task_id)
+        comment.delete()
+        return redirect("task", list_id=list_id, task_id=task_id)

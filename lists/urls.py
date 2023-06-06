@@ -20,4 +20,5 @@ urlpatterns = [
 
     # Comments
     path('<int:list_id>/<int:task_id>/comment', views.AddCommentView.as_view(), name="add_comment"),
+    path('<int:list_id>/<int:task_id>/comment/<int:comment_id>', views.DeleteCommentView.as_view(), name="delete_comment"),
 ]
