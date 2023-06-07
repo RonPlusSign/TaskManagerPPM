@@ -68,7 +68,7 @@
                 {% for comment in comments %}
                     <div class="card mb-3">
                         <div class="card-body">
-                            <span class="fw-bold mb-0">{{ comment.comment }}</span>
+                            <span class="mb-0">{{ comment.comment }}</span>
                             <div class="float-end">
                                 <span class="text-muted mb-0"><em>{{ comment.user }},</em></span>
                                 <span class="text-muted mb-0">{{ comment.created_at | date:"d/m/Y H:i" }}</span>

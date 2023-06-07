@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Case, Value, When
 
 
 class TaskList(models.Model):
@@ -34,6 +37,13 @@ class Task(models.Model):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = [
+            "completed",
+            Case(When(due_datetime__isnull=True, then=Value(datetime(9999, 12, 31))), default="due_datetime"),
+            "title",
+        ]
 
 
 class TaskComment(models.Model):
