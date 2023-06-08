@@ -1,1 +1,1 @@
-web: gunicorn TaskManagerPPM.wsgi
+web: gunicorn TaskManagerPPM.wsgi --log-file -
