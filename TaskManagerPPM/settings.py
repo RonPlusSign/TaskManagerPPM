@@ -24,7 +24,11 @@ SECRET_KEY = 'django-insecure-xnh8aj5nl)4*&3#ro!0zw2+c#6$h%ndmb9lai1co_nckqu+u#r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['taskmanagerppm-production.up.railway.app', '127.0.0.1']
+ALLOWED_HOSTS = ['task-manager-delli-andrea.up.railway.app', '127.0.0.1']
+
+CSRF_TRUSTED_ORIGINS = ['https://task-manager-delli-andrea.up.railway.app',]
+
+CORS_ORIGIN_WHITELIST = ['https://task-manager-delli-andrea.up.railway.app',]
 
 # Application definition
 
