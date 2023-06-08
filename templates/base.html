@@ -21,23 +21,22 @@
 
 <body>
 <header class="p-3 mb-3 border-bottom">
-    <div class="align-items-center">
+    <div class="d-flex align-items-center justify-content-between">
 
         <a class="navbar-brand d-inline-flex align-items-center" href="{% url 'home' %}">
             <img class="img-responsive" src="{% static 'favicon.ico' %}" alt="Favicon" style="max-height: 25px;">
             <h5 class="d-inline-block my-0 mx-2">Task Manager</h5>
         </a>
 
-        <div class="d-flex align-items-center float-end">
-
+        <div class="d-flex align-items-center">
             {% if user.is_authenticated %}
-                <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
-                    <li><a href="{% url 'lists' %}" class="nav-link px-2 py-0 link-dark">
-                        <button class="btn py-0">Lists</button>
-                    </a></li>
-                    <li><a href="{% url 'my-tasks' %}" class="nav-link px-2 py-0 link-dark">
-                        <button class="btn py-0">My tasks</button>
-                    </a></li>
+                <ul class="nav col-lg-auto me-lg-auto justify-content-center mb-md-0 d-none d-sm-flex">
+                    <li class="nav-item">
+                        <a href="{% url 'lists' %}" class="nav-link px-2 py-0 link-dark">Lists</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'my-tasks' %}" class="nav-link px-2 py-0 link-dark">My tasks</a>
+                    </li>
                 </ul>
                 <div class="dropdown text-end">
                     <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle" id="dropdownUser"
@@ -45,6 +44,11 @@
                         {{ user.username }}
                     </a>
                     <ul class="dropdown-menu text-small" aria-labelledby="dropdownUser">
+                        <li><a class="dropdown-item" href="{% url 'lists' %}">Lists</a></li>
+                        <li><a class="dropdown-item" href="{% url 'my-tasks' %}">My tasks</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li><a class="dropdown-item" href="{% url 'logout' %}">Log Out</a></li>
                     </ul>
                 </div>
