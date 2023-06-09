@@ -184,6 +184,7 @@ class CreateTaskView(LoginRequiredMixin, CreateView):
             set_message(request, "You are not a participant of this list.")
             return redirect("lists")
 
+        self.object = None
         form = self.get_form()
         if form.is_valid():
             self.form_valid(form)
